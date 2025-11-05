@@ -471,44 +471,100 @@ body{background:linear-gradient(180deg,#071021,var(--bg));color:#e6eef6;font-fam
 </div>
 
 <script>
-const ipModal=document.getElementById('modalIpBk'),
-openIP=document.getElementById('openIP'),
-closeIp=document.getElementById('closeIpModal');
-const ipList=document.getElementById('ipList'),
-addIp=document.getElementById('addIpBtn');
+/* ===== IP Modal ===== */
+const ipModal = document.getElementById('modalIpBk'),
+      openIP = document.getElementById('openIP'),
+      closeIp = document.getElementById('closeIpModal'),
+      ipList = document.getElementById('ipList'),
+      addIp = document.getElementById('addIpBtn');
 
-openIP.onclick=()=>{ipModal.style.display='flex';loadIPs();};
-closeIp.onclick=()=>{ipModal.style.display='none';};
+openIP.onclick = () => { ipModal.style.display = 'flex'; loadIPs(); };
+closeIp.onclick = () => { ipModal.style.display = 'none'; };
 
-function loadIPs(){
-  fetch('/api/ips').then(r=>r.json()).then(ips=>{
-    ipList.innerHTML=ips.map(ip=>`<div class='ip-item'><span>${ip}</span><button class='remove-btn' onclick="removeIP('${ip}')">🗑️</button></div>`).join('')||'<i>No IPs yet</i>';
-  });
+function loadIPs() {
+    fetch('/api/ips').then(r => r.json()).then(ips => {
+        ipList.innerHTML = ips.length
+            ? ips.map(ip => `<div class='ip-item'><span>${ip}</span>
+                <button class='remove-btn' onclick="removeIP('${ip}')">🗑️</button></div>`).join('')
+            : '<i>No IPs yet</i>';
+    });
 }
 
-function removeIP(ip){
-  fetch('/api/ips',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({ip})}).then(loadIPs);
+function removeIP(ip) {
+    fetch('/api/ips', {
+        method: 'DELETE',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ip})
+    }).then(loadIPs);
 }
 
-addIp.onclick=()=>{
-  const ip=document.getElementById('new_ip').value.trim();
-  if(!ip)return;
-  fetch('/api/ips',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ip})})
-  .then(()=>{document.getElementById('new_ip').value='';loadIPs();});
+addIp.onclick = () => {
+    const ip = document.getElementById('new_ip').value.trim();
+    if(!ip) return;
+    fetch('/api/ips', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ip})
+    }).then(()=> { document.getElementById('new_ip').value=''; loadIPs(); });
 };
 
-// 🟢 دکمه جدید برای شناسایی خودکار IP کاربر
+// Detect user's IP
 document.getElementById('detectIpBtn').onclick = () => {
-  fetch('https://api.ipify.org?format=json')
-    .then(r => r.json())
-    .then(d => {
-      document.getElementById('new_ip').value = d.ip;
-    })
-    .catch(() => alert('Could not detect IP.'));
+    fetch('https://api.ipify.org?format=json')
+        .then(r => r.json())
+        .then(d => { document.getElementById('new_ip').value = d.ip; })
+        .catch(() => alert('Could not detect IP.'));
 };
 
-document.getElementById('applyIps').onclick=()=>{
-  fetch('/apply-ips',{method:'POST'}).then(()=>alert('Changes applied!'));
+// Apply IP changes
+document.getElementById('applyIps').onclick = () => {
+    fetch('/apply-ips', {method:'POST'})
+        .then(r => r.json())
+        .then(res => alert(res.success ? 'Changes applied!' : 'Failed to apply changes'))
+        .catch(() => alert('Error applying changes'));
+};
+
+/* ===== Change Credentials Modal ===== */
+const changeModal = document.getElementById('modalBk'),
+      openChange = document.getElementById('openChange'),
+      modalSave = document.getElementById('modalSave'),
+      modalCancel = document.getElementById('modalCancel'),
+      modalErr = document.getElementById('modalErr');
+
+openChange.onclick = () => { changeModal.style.display = 'flex'; modalErr.innerText = ''; };
+modalCancel.onclick = () => { changeModal.style.display = 'none'; modalErr.innerText = ''; };
+
+modalSave.onclick = () => {
+    const new_user = document.getElementById('new_user').value.trim();
+    const new_pass = document.getElementById('new_pass').value;
+    const new_pass_confirm = document.getElementById('new_pass_confirm').value;
+
+    if (!new_user || !new_pass) {
+        modalErr.innerText = 'Username and password required';
+        return;
+    }
+    if (new_pass !== new_pass_confirm) {
+        modalErr.innerText = 'Passwords do not match';
+        return;
+    }
+
+    fetch('/change-password', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({new_user, new_pass})
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            alert('Credentials updated. Logging out...');
+            // POST request to logout and redirect to login
+            fetch('/logout', { method: 'POST' })
+                .finally(() => { window.location.href = '/login'; });
+        } else {
+            modalErr.innerText = res.error || 'Failed to change credentials';
+        }
+    })
+    .catch(e => { modalErr.innerText = 'Error: ' + e; });
 };
 </script>
 </body></html>"""
