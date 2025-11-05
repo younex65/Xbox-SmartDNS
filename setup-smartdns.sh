@@ -254,14 +254,15 @@ def read_logs(max_chars=12000):
 
 def escape_and_colorize(raw):
     text = html.escape(raw)
+    # کلاس‌های CSS اضافه شدند
     text = re.sub(r'(\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\])',
-                  r'<span style="color:#ffffff;font-weight:600;">\1</span>', text)
+                  r'<span class="log-date">\1</span>', text)
     text = re.sub(r'(Resolved [^\n]+→ [0-9\.]+(?: \([A-Z]{2}\))?)',
-                  r'<span style="color:#e8dcb8;">\1</span>', text)
+                  r'<span class="log-resolved">\1</span>', text)
     text = re.sub(r'((?:\d{1,3}\.){3}\d{1,3})',
-                  r'<span style="color:#aaffdd;font-weight:500;">\1</span>', text)
+                  r'<span class="log-ip">\1</span>', text)
     text = re.sub(r'\b(ERROR|Failed)\b',
-                  r'<span style="color:#ff6b6b;font-weight:bold;">\1</span>', text)
+                  r'<span class="log-error">\1</span>', text)
     return text.replace("\n", "<br>")
 
 # ---------- Login system ----------
@@ -414,8 +415,21 @@ body.light {background:var(--bg-light);color:var(--text-light);}
 .btn.primary.light,.btn.secondary.light{background:#34495e;color:#fff;}
 .card.dark{background:rgba(255,255,255,0.02);padding:14px;border-radius:10px;}
 .card.light{background:#ffffff;padding:14px;border-radius:10px;color:var(--text-light);}
-.logs{height:420px;overflow:auto;background:#02040a;border-radius:8px;padding:12px;font-family:var(--mono);font-size:13px;}
+.logs{height:420px;overflow:auto;background:#02040a;border-radius:8px;padding:12px;font-family:var(--mono);font-size:13px;color:#fff;}
 body.light .logs{background:#e6e6e6;color:#000;}
+
+/* ===== Log colors per theme ===== */
+/* Dark theme */
+body.dark .logs .log-date { color:#ffffff; font-weight:600; }
+body.dark .logs .log-resolved { color:#e8dcb8; }
+body.dark .logs .log-ip { color:#aaffdd; font-weight:500; }
+body.dark .logs .log-error { color:#ff6b6b; font-weight:bold; }
+/* Light theme */
+body.light .logs .log-date { color:#000000; font-weight:600; }
+body.light .logs .log-resolved { color:#555555; }
+body.light .logs .log-ip { color:#006400; font-weight:500; }
+body.light .logs .log-error { color:#ff0000; font-weight:bold; }
+
 .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.7);display:none;align-items:center;justify-content:center;}
 .modal.dark{background:#08121a;padding:18px;border-radius:12px;width:100%;max-width:420px;}
 .modal.light{background:#d9d9d9;padding:18px;border-radius:12px;width:100%;max-width:420px;color:#000;}
@@ -458,7 +472,7 @@ body.light .theme-switch .switch-handle{left:53px;}
 <div id="modalIpBk" class="modal-backdrop">
   <div class="modal dark" id="modalIp">
     <h3>Manage Allowed IPs</h3>
-	<button id="detectIpBtn" class="btn secondary dark" style="width:100%;margin-bottom:8px;">Detect My IP</button>
+    <button id="detectIpBtn" class="btn secondary dark" style="width:100%;margin-bottom:8px;">Detect My IP</button>
     <input id="new_ip" class="input dark" placeholder="Add new IP (e.g. 192.168.1.10)">
     <button id="addIpBtn" class="btn primary dark" style="width:100%;margin-bottom:8px;">Add IP</button>
     <div class="ip-list" id="ipList" style="color: #d0d0d0;"></div>
@@ -535,7 +549,7 @@ modalSave.onclick=()=>{
 LOGIN_TEMPLATE = """<!doctype html><html><head><meta charset="utf-8"><title>Login</title>
 <style>body{background:#071021;color:#fff;font-family:Inter;display:flex;align-items:center;justify-content:center;height:100vh}
 .box{background:#08121a;padding:28px;border-radius:12px;width:320px}
-.input{width:100%;padding:10px;margin:6px 0;border:none;border-radius:8px;background:#041122;color:#fff}
+.input{width:94%;padding:10px;margin:6px 0;border:none;border-radius:8px;background:#041122;color:#fff}
 .btn{width:100%;padding:10px;border:none;border-radius:8px;background:#00c8b8;color:#012a2a;font-weight:700}</style></head>
 <body><div class="box"><h3>SmartDNS Login</h3>
 <form method="post"><input name="username" class="input" placeholder="Username"><input type="password" name="password" class="input" placeholder="Password">
