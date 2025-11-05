@@ -304,7 +304,12 @@ def index():
 @app.route("/update", methods=["POST"])
 @login_required
 def update():
-    subprocess.Popen(["/app/update-ips.sh"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # اجرای update-ips.sh برای به‌روز کردن CDN و IP ها
+    subprocess.run(["/app/update-ips.sh"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    # اجرای apply-ips.sh برای اعمال تغییرات روی DNS
+    subprocess.run(["/app/apply-ips.sh"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
     return redirect(url_for("index"))
 
 @app.route("/apply-ips", methods=["POST"])
