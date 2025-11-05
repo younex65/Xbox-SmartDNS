@@ -499,7 +499,25 @@ body.light .theme-switch .switch-handle{left:53px;}
 /* ===== Theme Toggle ===== */
 const body=document.body;
 const themeSwitch=document.getElementById('themeSwitch');
-themeSwitch.onclick=()=>{body.classList.toggle('light');body.classList.toggle('dark');updateButtons();updateModals();}
+// Load theme from localStorage
+if(localStorage.getItem('theme')==='light'){
+    body.classList.remove('dark');
+    body.classList.add('light');
+} else {
+    body.classList.remove('light');
+    body.classList.add('dark');
+}
+updateButtons();
+updateModals();
+
+// Save theme on toggle
+themeSwitch.onclick = () => {
+    body.classList.toggle('light');
+    body.classList.toggle('dark');
+    updateButtons();
+    updateModals();
+    localStorage.setItem('theme', body.classList.contains('light') ? 'light' : 'dark');
+};
 function updateButtons(){
     document.querySelectorAll('.btn.primary,.btn.secondary').forEach(b=>{
         if(body.classList.contains('light')){
