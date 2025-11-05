@@ -440,7 +440,7 @@ body.light .logs .log-error { color:#ff0000; font-weight:bold; }
 .remove-btn{background:none;border:none;color:var(--danger);cursor:pointer;}
 /* ===== Theme Switcher ===== */
 .theme-switch{position:relative;width:70px;height:30px;border-radius:15px;background:#ccc;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:0 5px;}
-.theme-switch .switch-handle{position:absolute;width:28px;height:28px;border-radius:50%;background:#fff;top:1px;left:1px;transition:0.3s;}
+.theme-switch .switch-handle{position:absolute;width:28px;height:28px;border-radius:50%;background:#34495e;top:1px;left:1px;transition:0.3s;}
 .theme-switch svg{width:20px;height:20px;pointer-events:none;}
 body.light .theme-switch .switch-handle{left:53px;}
 </style></head><body class="dark">
@@ -450,7 +450,7 @@ body.light .theme-switch .switch-handle{left:53px;}
     <div style="display:flex;gap:8px;align-items:center;">
       <div class="theme-switch" id="themeSwitch">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#34495e"/></svg>
-        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#f0c658"/></svg>
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#00c8b8"/></svg>
         <div class="switch-handle"></div>
       </div>
       <button id="openIP" class="btn secondary dark">Manage Allowed IPs</button>
