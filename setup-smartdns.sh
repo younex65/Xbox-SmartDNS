@@ -449,8 +449,8 @@ body.light .theme-switch .switch-handle{left:53px;}
     <div><b>Xbox SmartDNS Panel</b><br><small>Logged in as {{ user }}</small></div>
     <div style="display:flex;gap:8px;align-items:center;">
       <div class="theme-switch" id="themeSwitch">
-        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#000"/></svg>
-        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#57afe2"/></svg>
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#34495e"/></svg>
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#f0c658"/></svg>
         <div class="switch-handle"></div>
       </div>
       <button id="openIP" class="btn secondary dark">Manage Allowed IPs</button>
