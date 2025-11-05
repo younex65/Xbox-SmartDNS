@@ -204,9 +204,9 @@ chmod +x apply-ips.sh
 # ---------- webview.py ----------
 cat > webview.py <<'EOF'
 #!/usr/bin/env python3
-# webview.py — updated with IP management modal and apply changes button
+# webview.py — Xbox SmartDNS Panel with Dark/Light theme toggle
 from flask import Flask, request, redirect, url_for, session, render_template_string, jsonify
-import subprocess, functools, os, re, html, json
+import subprocess, functools, os, re, html
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -254,16 +254,12 @@ def read_logs(max_chars=12000):
 
 def escape_and_colorize(raw):
     text = html.escape(raw)
-    # تاریخ و ساعت (سفید)
     text = re.sub(r'(\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\])',
                   r'<span style="color:#ffffff;font-weight:600;">\1</span>', text)
-    # خطوط resolved (استخوانی)
     text = re.sub(r'(Resolved [^\n]+→ [0-9\.]+(?: \([A-Z]{2}\))?)',
                   r'<span style="color:#e8dcb8;">\1</span>', text)
-    # IPها (سبز مدرن)
     text = re.sub(r'((?:\d{1,3}\.){3}\d{1,3})',
                   r'<span style="color:#aaffdd;font-weight:500;">\1</span>', text)
-    # ERRORها با قرمز پررنگ
     text = re.sub(r'\b(ERROR|Failed)\b',
                   r'<span style="color:#ff6b6b;font-weight:bold;">\1</span>', text)
     return text.replace("\n", "<br>")
@@ -313,10 +309,6 @@ def update():
 @app.route("/apply-ips", methods=["POST"])
 @login_required
 def apply_ips():
-    """
-    Called when the user clicks 'Apply Changes' in the web UI.
-    Runs the /app/apply-ips.sh script to apply DNS rules.
-    """
     SCRIPT = "/app/apply-ips.sh"
     LOG_FILE = "/var/log/xbox-smartdns-update.log"
 
@@ -379,7 +371,6 @@ def download_logs():
         'Content-Type':'application/octet-stream',
         'Content-Disposition':'attachment; filename="xbox-smartdns-update.log"'})
 
-# ---------- IP management API ----------
 @app.route("/api/ips", methods=["GET","POST","DELETE"])
 @login_required
 def manage_ips():
@@ -403,41 +394,61 @@ def manage_ips():
             save_ips(ips)
         return jsonify({"success":True,"ips":ips})
 
-# ---------- HTML templates ----------
-# (از همان استایل دکمه‌های قبلی برای modal جدید استفاده شده)
-
+# ---------- HTML Templates ----------
 TEMPLATE = """<!doctype html><html><head><meta charset="utf-8"><title>Xbox SmartDNS Panel</title>
-<meta name="viewport" content="width=device-width,initial-scale=1"><style>
-:root{--bg:#0f1720;--accent:#00c8b8;--danger:#ff6b6b;--muted:#9aa4b2;--mono:ui-monospace,Menlo,Monaco;}
-body{background:linear-gradient(180deg,#071021,var(--bg));color:#e6eef6;font-family:Inter,system-ui;}
-.container{max-width:980px;margin:28px auto;padding:20px;background:rgba(255,255,255,0.02);border-radius:12px;}
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root {
+    --bg-dark:#0f1720; --accent-dark:#00c8b8; --danger:#ff6b6b; --muted:#9aa4b2; --mono:ui-monospace,Menlo,Monaco;
+    --bg-light:#f2f2f2; --accent-light:#34495e; --text-light:#000; --popup-light:#d9d9d9;
+}
+body {margin:0;font-family:Inter,system-ui;}
+body.dark {background:linear-gradient(180deg,#071021,var(--bg-dark));color:#e6eef6;}
+body.light {background:var(--bg-light);color:var(--text-light);}
+.container{max-width:980px;margin:28px auto;padding:20px;border-radius:12px;}
 .header{display:flex;justify-content:space-between;align-items:center;}
 .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600;min-width:140px;}
-.btn.primary,.btn.secondary{background:var(--accent);color:#012a2a;}
+.btn.primary.dark{background:var(--accent-dark);color:#012a2a;}
+.btn.secondary.dark{background:var(--accent-dark);color:#012a2a;}
 .btn.logout{background:var(--danger);color:#fff;}
-.card{background:rgba(255,255,255,0.02);padding:14px;border-radius:10px;}
+.btn.primary.light,.btn.secondary.light{background:#34495e;color:#fff;}
+.card.dark{background:rgba(255,255,255,0.02);padding:14px;border-radius:10px;}
+.card.light{background:#ffffff;padding:14px;border-radius:10px;color:var(--text-light);}
 .logs{height:420px;overflow:auto;background:#02040a;border-radius:8px;padding:12px;font-family:var(--mono);font-size:13px;}
+body.light .logs{background:#e6e6e6;color:#000;}
 .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.7);display:none;align-items:center;justify-content:center;}
-.modal{background:#08121a;padding:18px;border-radius:12px;width:100%;max-width:420px;}
-.input{width:100%;padding:10px;margin-bottom:8px;border-radius:8px;background:#041122;border:none;color:#d7eefb;}
+.modal.dark{background:#08121a;padding:18px;border-radius:12px;width:100%;max-width:420px;}
+.modal.light{background:#d9d9d9;padding:18px;border-radius:12px;width:100%;max-width:420px;color:#000;}
+.input.dark{width:95%;padding:10px;margin-bottom:8px;border-radius:8px;background:#041122;border:none;color:#d7eefb;}
+.input.light{width:95%;padding:10px;margin-bottom:8px;border-radius:8px;background:#fff;border:1px solid #ccc;color:#000;}
 .ip-list{background:#01080e;padding:8px;border-radius:8px;max-height:200px;overflow:auto;margin-top:8px;}
 .ip-item{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
 .remove-btn{background:none;border:none;color:var(--danger);cursor:pointer;}
-</style></head><body>
+/* ===== Theme Switcher ===== */
+.theme-switch{position:relative;width:70px;height:30px;border-radius:15px;background:#ccc;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:0 5px;}
+.theme-switch .switch-handle{position:absolute;width:28px;height:28px;border-radius:50%;background:#fff;top:1px;left:1px;transition:0.3s;}
+.theme-switch svg{width:20px;height:20px;pointer-events:none;}
+body.light .theme-switch .switch-handle{left:53px;}
+</style></head><body class="dark">
 <div class="container">
   <div class="header">
     <div><b>Xbox SmartDNS Panel</b><br><small>Logged in as {{ user }}</small></div>
-    <div style="display:flex;gap:8px;">
-      <button id="openIP" class="btn secondary">Manage Allowed IPs</button>
-      <button id="openChange" class="btn secondary">Change Username / Password</button>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <div class="theme-switch" id="themeSwitch">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#000"/></svg>
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#f39c12"/></svg>
+        <div class="switch-handle"></div>
+      </div>
+      <button id="openIP" class="btn secondary dark">Manage Allowed IPs</button>
+      <button id="openChange" class="btn secondary dark">Change Username / Password</button>
       <form method="post" action="/logout" style="display:inline;"><button class="btn logout" type="submit">Logout</button></form>
     </div>
   </div>
   <div style="margin-top:16px;">
-    <form method="post" action="/update" style="display:inline;"><button class="btn primary" type="submit">Update IPs Now</button></form>
-    <button id="applyIps" class="btn primary" style="margin-left:8px;">Apply Changes</button>
+    <form method="post" action="/update" style="display:inline;"><button class="btn primary dark" type="submit">Update IPs Now</button></form>
+    <button id="applyIps" class="btn primary dark" style="margin-left:8px;">Apply Changes</button>
   </div>
-  <div class="card" style="margin-top:16px;">
+  <div class="card dark" style="margin-top:16px;">
     <h3>Logs</h3>
     <div id="logs" class="logs">{{ logs|safe }}</div>
   </div>
@@ -445,126 +456,78 @@ body{background:linear-gradient(180deg,#071021,var(--bg));color:#e6eef6;font-fam
 
 <!-- Manage IP Modal -->
 <div id="modalIpBk" class="modal-backdrop">
-  <div class="modal">
+  <div class="modal dark" id="modalIp">
     <h3>Manage Allowed IPs</h3>
-	<button id="detectIpBtn" class="btn secondary" style="width:100%;margin-bottom:8px;">Detect My IP</button>
-    <input id="new_ip" class="input" placeholder="Add new IP (e.g. 192.168.1.10)">
-    <button id="addIpBtn" class="btn primary" style="width:100%;margin-bottom:8px;">Add IP</button>
-    <div class="ip-list" id="ipList"></div>
+	<button id="detectIpBtn" class="btn secondary dark" style="width:100%;margin-bottom:8px;">Detect My IP</button>
+    <input id="new_ip" class="input dark" placeholder="Add new IP (e.g. 192.168.1.10)">
+    <button id="addIpBtn" class="btn primary dark" style="width:100%;margin-bottom:8px;">Add IP</button>
+    <div class="ip-list" id="ipList" style="color: #d0d0d0;"></div>
     <div style="text-align:right;margin-top:8px;">
-      <button id="closeIpModal" class="btn secondary">Close</button>
+      <button id="closeIpModal" class="btn secondary dark">Close</button>
     </div>
   </div>
 </div>
 
-<!-- Change password modal (from previous version) -->
+<!-- Change password modal -->
 <div id="modalBk" class="modal-backdrop">
-  <div class="modal">
+  <div class="modal dark" id="modalChange">
     <h3>Change Credentials</h3>
-    <input id="new_user" class="input" placeholder="New username">
-    <input id="new_pass" class="input" type="password" placeholder="New password">
-    <input id="new_pass_confirm" class="input" type="password" placeholder="Confirm new password">
+    <input id="new_user" class="input dark" placeholder="New username">
+    <input id="new_pass" class="input dark" type="password" placeholder="New password">
+    <input id="new_pass_confirm" class="input dark" type="password" placeholder="Confirm new password">
     <div id="modalErr" style="color:var(--danger);"></div>
-    <button id="modalSave" class="btn primary" style="width:100%;margin-top:8px;">Save</button>
-    <button id="modalCancel" class="btn secondary" style="width:100%;margin-top:8px;">Cancel</button>
+    <button id="modalSave" class="btn primary dark" style="width:100%;margin-top:8px;">Save</button>
+    <button id="modalCancel" class="btn secondary dark" style="width:100%;margin-top:8px;">Cancel</button>
   </div>
 </div>
 
 <script>
-/* ===== IP Modal ===== */
-const ipModal = document.getElementById('modalIpBk'),
-      openIP = document.getElementById('openIP'),
-      closeIp = document.getElementById('closeIpModal'),
-      ipList = document.getElementById('ipList'),
-      addIp = document.getElementById('addIpBtn');
-
-openIP.onclick = () => { ipModal.style.display = 'flex'; loadIPs(); };
-closeIp.onclick = () => { ipModal.style.display = 'none'; };
-
-function loadIPs() {
-    fetch('/api/ips').then(r => r.json()).then(ips => {
-        ipList.innerHTML = ips.length
-            ? ips.map(ip => `<div class='ip-item'><span>${ip}</span>
-                <button class='remove-btn' onclick="removeIP('${ip}')">🗑️</button></div>`).join('')
-            : '<i>No IPs yet</i>';
+/* ===== Theme Toggle ===== */
+const body=document.body;
+const themeSwitch=document.getElementById('themeSwitch');
+themeSwitch.onclick=()=>{body.classList.toggle('light');body.classList.toggle('dark');updateButtons();updateModals();}
+function updateButtons(){
+    document.querySelectorAll('.btn.primary,.btn.secondary').forEach(b=>{
+        if(body.classList.contains('light')){
+            b.classList.remove('dark'); b.classList.add('light');
+        }else{b.classList.remove('light'); b.classList.add('dark');}
+    });
+}
+function updateModals(){
+    document.querySelectorAll('.modal').forEach(m=>{
+        if(body.classList.contains('light')){m.classList.remove('dark'); m.classList.add('light');}
+        else{m.classList.remove('light'); m.classList.add('dark');}
+    });
+    document.querySelectorAll('.input').forEach(i=>{
+        if(body.classList.contains('light')){i.classList.remove('dark'); i.classList.add('light');}
+        else{i.classList.remove('light'); i.classList.add('dark');}
     });
 }
 
-function removeIP(ip) {
-    fetch('/api/ips', {
-        method: 'DELETE',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ip})
-    }).then(loadIPs);
-}
+/* ===== IP Modal ===== */
+const ipModal=document.getElementById('modalIpBk'),openIP=document.getElementById('openIP'),closeIp=document.getElementById('closeIpModal'),ipList=document.getElementById('ipList'),addIp=document.getElementById('addIpBtn');
+openIP.onclick=()=>{ipModal.style.display='flex';loadIPs();};
+closeIp.onclick=()=>{ipModal.style.display='none';};
+function loadIPs(){fetch('/api/ips').then(r=>r.json()).then(ips=>{ipList.innerHTML=ips.length?ips.map(ip=>`<div class='ip-item'><span>${ip}</span><button class='remove-btn' onclick="removeIP('${ip}')">🗑️</button></div>`).join(''):'<i>No IPs yet</i>';});}
+function removeIP(ip){fetch('/api/ips',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({ip})}).then(loadIPs);}
+addIp.onclick=()=>{const ip=document.getElementById('new_ip').value.trim();if(!ip)return;fetch('/api/ips',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ip})}).then(()=>{document.getElementById('new_ip').value='';loadIPs();});};
+document.getElementById('detectIpBtn').onclick=()=>{fetch('https://api.ipify.org?format=json').then(r=>r.json()).then(d=>{document.getElementById('new_ip').value=d.ip;}).catch(()=>alert('Could not detect IP.'));};
 
-addIp.onclick = () => {
-    const ip = document.getElementById('new_ip').value.trim();
-    if(!ip) return;
-    fetch('/api/ips', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ip})
-    }).then(()=> { document.getElementById('new_ip').value=''; loadIPs(); });
-};
-
-// Detect user's IP
-document.getElementById('detectIpBtn').onclick = () => {
-    fetch('https://api.ipify.org?format=json')
-        .then(r => r.json())
-        .then(d => { document.getElementById('new_ip').value = d.ip; })
-        .catch(() => alert('Could not detect IP.'));
-};
-
-// Apply IP changes
-document.getElementById('applyIps').onclick = () => {
-    fetch('/apply-ips', {method:'POST'})
-        .then(r => r.json())
-        .then(res => alert(res.success ? 'Changes applied!' : 'Failed to apply changes'))
-        .catch(() => alert('Error applying changes'));
-};
+/* ===== Apply Changes ===== */
+document.getElementById('applyIps').onclick=()=>{fetch('/apply-ips',{method:'POST'}).then(r=>r.json()).then(res=>alert(res.success?'Changes applied!':'Failed to apply changes')).catch(()=>alert('Error applying changes'));};
 
 /* ===== Change Credentials Modal ===== */
-const changeModal = document.getElementById('modalBk'),
-      openChange = document.getElementById('openChange'),
-      modalSave = document.getElementById('modalSave'),
-      modalCancel = document.getElementById('modalCancel'),
-      modalErr = document.getElementById('modalErr');
-
-openChange.onclick = () => { changeModal.style.display = 'flex'; modalErr.innerText = ''; };
-modalCancel.onclick = () => { changeModal.style.display = 'none'; modalErr.innerText = ''; };
-
-modalSave.onclick = () => {
-    const new_user = document.getElementById('new_user').value.trim();
-    const new_pass = document.getElementById('new_pass').value;
-    const new_pass_confirm = document.getElementById('new_pass_confirm').value;
-
-    if (!new_user || !new_pass) {
-        modalErr.innerText = 'Username and password required';
-        return;
-    }
-    if (new_pass !== new_pass_confirm) {
-        modalErr.innerText = 'Passwords do not match';
-        return;
-    }
-
-    fetch('/change-password', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({new_user, new_pass})
-    })
-    .then(r => r.json())
-    .then(res => {
-        if (res.success) {
-            alert('Credentials updated. Logging out...');
-            // POST request to logout and redirect to login
-            fetch('/logout', { method: 'POST' })
-                .finally(() => { window.location.href = '/login'; });
-        } else {
-            modalErr.innerText = res.error || 'Failed to change credentials';
-        }
-    })
-    .catch(e => { modalErr.innerText = 'Error: ' + e; });
+const changeModal=document.getElementById('modalBk'),openChange=document.getElementById('openChange'),modalSave=document.getElementById('modalSave'),modalCancel=document.getElementById('modalCancel'),modalErr=document.getElementById('modalErr');
+openChange.onclick=()=>{changeModal.style.display='flex';modalErr.innerText='';};
+modalCancel.onclick=()=>{changeModal.style.display='none';modalErr.innerText='';};
+modalSave.onclick=()=>{
+    const new_user=document.getElementById('new_user').value.trim();
+    const new_pass=document.getElementById('new_pass').value;
+    const new_pass_confirm=document.getElementById('new_pass_confirm').value;
+    if(!new_user||!new_pass){modalErr.innerText='Username and password required';return;}
+    if(new_pass!==new_pass_confirm){modalErr.innerText='Passwords do not match';return;}
+    fetch('/change-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({new_user,new_pass})})
+    .then(r=>r.json()).then(res=>{if(res.success){alert('Credentials updated. Logging out...');fetch('/logout',{ method: 'POST' }).finally(()=>{window.location.href='/login';});}else{modalErr.innerText=res.error||'Failed to change credentials';}}).catch(e=>{modalErr.innerText='Error: '+e;});
 };
 </script>
 </body></html>"""
@@ -580,7 +543,6 @@ LOGIN_TEMPLATE = """<!doctype html><html><head><meta charset="utf-8"><title>Logi
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=4000)
-
 EOF
 
 echo "=== Building Docker container ==="
