@@ -1,0 +1,17 @@
+xboxlive.com
+xbox.com
+xsts.microsoft.com
+msftncsi.com
+xboxapi.com
+xboxservices.com
+origin.com
+ea.com
+frostcdn.com
+mortal.com
+storeedgefd.dsx.mp.microsoft.com
+wbgames.comm
+mk1.wbprod.com
+assets1.xboxlive.com
+assets2.xboxlive.com
+dlassets.xboxlive.com
+download.xbox.com
